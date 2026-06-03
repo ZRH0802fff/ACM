@@ -16,3 +16,9 @@ __pycache__/
 .idea/
 # Mac 隐藏属性文件
 ._*
+# Python 虚拟环境
+.venv/
+venv/
+
+# CLion/CMake 编译输出目录
+cmake-build-*/
