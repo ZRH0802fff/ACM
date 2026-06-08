@@ -11,6 +11,5 @@ def dfs(i,tans):
     dfs(i+1,tans*i)
 
 dfs(0,1)
-tt=list(gys)
-tt.sort()
-print(tt)
+
+gys=list(gys)
