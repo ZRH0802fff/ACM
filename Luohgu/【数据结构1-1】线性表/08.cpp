@@ -19,7 +19,8 @@ int main(){
                 if (s[i] == ']' && s[stc[r - 1]] == '['){
                     vis[i] = true;
                     vis[stc[--r]] = true;
-                }else if (s[i] == ')' && s[stc[r - 1]] == '('){
+                }
+                else if (s[i] == ')' && s[stc[r - 1]] == '('){
                     vis[i] = true;
                     vis[stc[--r]] = true;
                 }else{
@@ -28,7 +29,7 @@ int main(){
             }
         }
     }
-    string ans = "";
+    string ans ;
     for (int i = 0; i < len;++i){
         if (vis[i] == false){
             if(s[i]=='('||s[i]==')')
