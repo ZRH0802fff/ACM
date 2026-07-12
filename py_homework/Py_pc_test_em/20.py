@@ -12,7 +12,7 @@ class EBook(Book):
 
 class PaperBook(Book):
     def borrow(self):
-        print(f"正在借阅纸质书：{self.title}")
+        print(f"正在借阅纸质书：{self.title}") 
 
 
 ebook = EBook("Python基础", "张三", 39.9)
