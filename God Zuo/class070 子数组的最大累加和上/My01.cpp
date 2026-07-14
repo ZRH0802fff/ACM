@@ -1,0 +1,52 @@
+// 子数组最大累加和
+// 给你一个整数数组 nums
+// 返回非空子数组的最大累加和
+// 测试链接 : https://leetcode.cn/problems/maximum-subarray/
+#include<bits/stdc++.h>
+using namespace std;
+
+class Solution{
+public:
+    int maxSubArray(vector<int> &nums){
+        int n = nums.size();
+        int ans = nums[0];
+        int pre = nums[0];
+        for (int i = 1; i < n;++i){
+            pre = max(nums[i], pre + nums[i]);
+            ans = pre > ans ? pre : ans;
+        }
+        return ans;
+    }
+};
+
+// 如下代码为附加问题的实现
+// 子数组中找到拥有最大累加和的子数组
+// 并返回如下三个信息:
+// 1) 最大累加和子数组的开头left
+// 2) 最大累加和子数组的结尾right
+// 3) 最大累加和子数组的累加和sum
+int left1=0, right1=0, sum;
+int nums[10];
+void f(){
+        sum = INT_MIN;
+        for (int l = 0, r = 0, pre = INT_MAX; r < 10;++r){
+            if(pre>=0){
+                pre += nums[r];
+            }else{
+                pre = nums[r];
+                l = r;
+            }
+            if(pre>sum){
+                sum = pre;
+                left1 = l;
+                right1 = r;
+            }
+        }
+    }
+
+int main(){
+    for (int i = 0; i < 10;++i){
+        cin >> nums[i];
+    }
+    
+}
