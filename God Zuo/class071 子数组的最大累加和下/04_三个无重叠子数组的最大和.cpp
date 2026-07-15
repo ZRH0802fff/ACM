@@ -17,7 +17,7 @@ int prefix[MAXN];
 // suffix[i] : i~n-1范围上所有长度为k的子数组中，拥有最大累加和的子数组的开头
 int suffix[MAXN];
 
-class Solution {
+class Solution { 
 public:
     vector<int> maxSumOfThreeSubarrays(vector<int>& nums, int k) {
         int n = nums.size();

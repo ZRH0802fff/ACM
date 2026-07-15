@@ -45,6 +45,7 @@ int maxSumReverse2(vector<int>& nums) {
         start[i] = max(nums[i], nums[i] + start[i + 1]);
     }
     int ans = start[0];
+    //end -> 子数组必须以i-1结尾，最大累加和
     int end = nums[0];
     int maxEnd = nums[0];
     for (int i = 1; i < n; i++) {
