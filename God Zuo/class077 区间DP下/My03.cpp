@@ -22,14 +22,12 @@ int main(){
             dp[i][j][1] = 0;
         }
     }
-        for (int i = 1; i < n; ++i)
-        {
-            if (nums[i] < nums[i + 1])
-            {
-                dp[i][i + 1][0] = 1;
-                dp[i][i + 1][1] = 1;
-            }
+    for (int i = 1; i < n; ++i){
+        if (nums[i] < nums[i + 1]){
+            dp[i][i + 1][0] = 1;
+            dp[i][i + 1][1] = 1;
         }
+    }
     for (int l = n - 2; l >  0; --l) {
         for (int r = l + 2; r <= n;++r){
             if(nums[l]<nums[l+1]){

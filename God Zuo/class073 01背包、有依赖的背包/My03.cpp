@@ -31,6 +31,7 @@ public:
                 }
             }
         }
+        return dp[0][s];
     }
 };
 

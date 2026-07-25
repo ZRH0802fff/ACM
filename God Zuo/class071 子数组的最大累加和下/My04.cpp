@@ -19,7 +19,7 @@
 #include<bits/stdc++.h>
 using namespace std;
 
-// sums[i] : 以i开头并且长度为k的子数组的累加和
+// sums[i]   : 以i开头并且长度为k的子数组的累加和
 // prefix[i] : 0~i范围上所有长度为k的子数组中，拥有最大累加和的子数组的开头
 // suffix[i] : i~n-1范围上所有长度为k的子数组中，拥有最大累加和的子数组的开头
 const int MAXN = 20010;
@@ -38,7 +38,6 @@ public:
             prefix[i] = 0;
             suffix[i] = 0;
         }
-
 
         //sums
         for (int l = 0, r = 0, sum = 0; r < n; r++){
