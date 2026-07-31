@@ -1,0 +1,80 @@
+// 并行课程 III
+// 给你一个整数 n ，表示有 n 节课，课程编号从 1 到 n
+// 同时给你一个二维整数数组 relations ，
+// 其中 relations[j] = [prevCoursej, nextCoursej]
+// 表示课程 prevCoursej 必须在课程 nextCoursej 之前 完成（先修课的关系）
+// 同时给你一个下标从 0 开始的整数数组 time
+// 其中 time[i] 表示完成第 (i+1) 门课程需要花费的 月份 数。
+// 请你根据以下规则算出完成所有课程所需要的 最少 月份数：
+// 如果一门课的所有先修课都已经完成，你可以在 任意 时间开始这门课程。
+// 你可以 同时 上 任意门课程 。请你返回完成所有课程所需要的 最少 月份数。
+// 注意：测试数据保证一定可以完成所有课程（也就是先修课的关系构成一个有向无环图）
+// 测试链接 : https://leetcode.cn/problems/parallel-courses-iii/
+
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 50001;
+const int MAXM = 50001;
+
+int head[MAXN];
+int nxt[MAXM];
+int to[MAXM];
+int graphCnt;
+
+int indegree[MAXN];
+int queue_[MAXN];
+int l, r;
+int cost[MAXN];
+
+class Solution {
+public:
+    int minimumTime(int n, vector<vector<int>>& relations, vector<int>& time) {
+        // 点 : 1....n
+        graphCnt = 1;
+        for (int i = 0; i <= n; i++) {
+            head[i] = 0;
+            indegree[i] = 0;
+            cost[i] = 0;
+        }
+        for (auto& edge : relations) {
+            int u = edge[0], v = edge[1];
+            nxt[graphCnt] = head[u];
+            to[graphCnt] = v;
+            head[u] = graphCnt++;
+            indegree[v]++;
+        }
+        l = 0;
+        r = 0;
+        for (int i = 1; i <= n; i++) {
+            if (indegree[i] == 0) {
+                queue_[r++] = i;
+            }
+        }
+        int ans = 0;
+        while (l < r) {
+            int cur = queue_[l++];
+            // 1 : time[0]
+            // x : time[x-1]
+            cost[cur] += time[cur - 1];
+            ans = max(ans, cost[cur]);
+            for (int ei = head[cur]; ei > 0; ei = nxt[ei]) {
+                int next = to[ei];
+                cost[next] = max(cost[next], cost[cur]);
+                if (--indegree[next] == 0) {
+                    queue_[r++] = next;
+                }
+            }
+        }
+        return ans;
+    }
+};
+
+int main() {
+    Solution sol;
+    // 示例: n=3, relations=[[1,3],[2,3]], time=[3,2,5]
+    vector<vector<int>> rel = {{1,3},{2,3}};
+    vector<int> time = {3,2,5};
+    cout << "min time: " << sol.minimumTime(3, rel, time) << " (expected: 8)" << endl;
+    return 0;
+}

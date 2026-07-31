@@ -32,3 +32,5 @@ if ed_num==n-1:
     print(ans)
 else:
     print('orz')
+
+    
