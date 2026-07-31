@@ -19,19 +19,67 @@
 3. 若不连通则合并，累加权重
 4. 选够 n-1 条边即完成
 
-```cpp
-sort(edges, edges + m, [](const Edge& a, const Edge& b) { return a.w < b.w; });
-for (int i = 0; i < m; i++) {
-    if (unionSet(edges[i].u, edges[i].v)) {
-        ans += edges[i].w;
-        if (++edgeCnt == n - 1) break;
-    }
-}
-```
-
 ### 坑点
 - 边用 struct 存储（`int edges[MAXM][3]` 无法用 sort）
 - 并查集路径压缩：`if (i != father[i]) father[i] = find(father[i]);`
+
+### 代码
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+// 时间复杂度O(m * log m) + O(n + m)
+
+const int MAXN = 5001;
+const int MAXM = 200001;
+
+int father[MAXN];
+
+// u, v, w
+struct Edge {
+    int u, v, w;
+} edges[MAXM];
+
+int n, m;
+
+void build() {
+    for (int i = 1; i <= n; i++) {
+        father[i] = i;
+    }
+}
+
+int find(int i) {
+    if (i != father[i]) {
+        father[i] = find(father[i]);
+    }
+    return father[i];
+}
+
+// 如果x和y本来就是一个集合，返回false
+// 如果x和y不是一个集合，合并之后返回true
+bool unionSet(int x, int y) {
+    int fx = find(x);
+    int fy = find(y);
+    if (fx != fy) {
+        father[fx] = fy;
+        return true;
+    } else {
+        return false;
+    }
+}
+
+// 核心算法（通常在main中调用）:
+// sort(edges, edges + m, [](const Edge& a, const Edge& b) { return a.w < b.w; });
+// int ans = 0, edgeCnt = 0;
+// for (int i = 0; i < m; i++) {
+//     if (unionSet(edges[i].u, edges[i].v)) {
+//         edgeCnt++;
+//         ans += edges[i].w;
+//     }
+//     if (edgeCnt == n - 1) break;
+// }
+// if (edgeCnt == n - 1) cout << ans; else cout << "orz";
+```
 
 ---
 
@@ -57,6 +105,215 @@ for (int i = 0; i < m; i++) {
 - 静态版中 `swap` 时要同步更新 `where` 数组
 - `pop()` 后 `where[u] = -2` 标记已弹出
 
+### 代码（动态版）
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+// 时间复杂度O(n + m) + O(m * log m)
+
+const int MAXN = 5001;
+const int MAXM = 400001;
+
+// 链式前向星建图
+int head[MAXN];
+int nxt[MAXM];
+int to[MAXM];
+int weight[MAXM];
+int cnt;
+
+// 手写小根堆 (边: 到达节点, 花费)
+int heap[MAXM][2];
+int heapSize;
+
+void addEdge(int u, int v, int w) {
+    nxt[cnt] = head[u];
+    to[cnt] = v;
+    weight[cnt] = w;
+    head[u] = cnt++;
+}
+
+void push(int v, int cost) {
+    int i = heapSize++;
+    heap[i][0] = v;
+    heap[i][1] = cost;
+    while (heap[i][1] < heap[(i - 1) / 2][1]) {
+        swap(heap[i][0], heap[(i - 1) / 2][0]);
+        swap(heap[i][1], heap[(i - 1) / 2][1]);
+        i = (i - 1) / 2;
+    }
+}
+
+void pop(int& v, int& cost) {
+    v = heap[0][0];
+    cost = heap[0][1];
+    heap[0][0] = heap[--heapSize][0];
+    heap[0][1] = heap[heapSize][1];
+    int i = 0;
+    int l = 1;
+    while (l < heapSize) {
+        int best = l + 1 < heapSize && heap[l + 1][1] < heap[l][1] ? l + 1 : l;
+        best = heap[best][1] < heap[i][1] ? best : i;
+        if (best == i) break;
+        swap(heap[best][0], heap[i][0]);
+        swap(heap[best][1], heap[i][1]);
+        i = best;
+        l = i * 2 + 1;
+    }
+}
+
+bool heapEmpty() {
+    return heapSize == 0;
+}
+
+// 核心Prim逻辑：
+// bool set[MAXN] = {false};
+// int nodeCnt = 1;
+// set[1] = true;
+// for (int ei = head[1]; ei > 0; ei = nxt[ei]) push(to[ei], weight[ei]);
+// int ans = 0;
+// while (!heapEmpty()) {
+//     int next, cost;
+//     pop(next, cost);
+//     if (!set[next]) {
+//         nodeCnt++;
+//         set[next] = true;
+//         ans += cost;
+//         for (int ei = head[next]; ei > 0; ei = nxt[ei]) push(to[ei], weight[ei]);
+//     }
+// }
+// if (nodeCnt == n) 输出ans; else 输出"orz";
+```
+
+### 代码（静态版）
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 5001;
+const int MAXM = 400001;
+
+int n, m;
+
+// 链式前向星建图
+int head[MAXN];
+int nxt[MAXM];
+int to[MAXM];
+int weight[MAXM];
+int cnt;
+
+// 改写的堆结构
+int heap[MAXN][2];
+
+// where[v] = -1，表示v这个节点，从来没有进入过堆
+// where[v] = -2，表示v这个节点，已经弹出过了
+// where[v] = i(>=0)，表示v这个节点，在堆上的i位置
+int where[MAXN];
+
+// 堆的大小
+int heapSize;
+
+// 找到的节点个数
+int nodeCnt;
+
+void build() {
+    cnt = 1;
+    heapSize = 0;
+    nodeCnt = 0;
+    for (int i = 1; i <= n; i++) {
+        head[i] = 0;
+        where[i] = -1;
+    }
+}
+
+void addEdge(int u, int v, int w) {
+    nxt[cnt] = head[u];
+    to[cnt] = v;
+    weight[cnt] = w;
+    head[u] = cnt++;
+}
+
+void heapInsert(int i) {
+    while (heap[i][1] < heap[(i - 1) / 2][1]) {
+        swap(heap[i], heap[(i - 1) / 2]);
+        int a = heap[i][0];
+        int b = heap[(i - 1) / 2][0];
+        where[a] = i;
+        where[b] = (i - 1) / 2;
+        i = (i - 1) / 2;
+    }
+}
+
+// 当前处理的是编号为ei的边！
+void addOrUpdateOrIgnore(int ei) {
+    int v = to[ei];
+    int w = weight[ei];
+    // 去往v点，权重w
+    if (where[v] == -1) {
+        // v这个点，从来没有进入过堆！
+        heap[heapSize][0] = v;
+        heap[heapSize][1] = w;
+        where[v] = heapSize++;
+        heapInsert(where[v]);
+    } else if (where[v] >= 0) {
+        // v这个点的记录，在堆上的位置是where[v]
+        heap[where[v]][1] = min(heap[where[v]][1], w);
+        heapInsert(where[v]);
+    }
+}
+
+int u, w;
+
+// 堆顶的记录：节点 -> u、到节点的花费 -> w
+void pop() {
+    u = heap[0][0];
+    w = heap[0][1];
+    swap(heap[0], heap[--heapSize]);
+    if (heapSize > 0) {
+        where[heap[0][0]] = 0;
+    }
+    where[u] = -2;
+    nodeCnt++;
+    // heapify
+    int i = 0;
+    int l = 1;
+    while (l < heapSize) {
+        int best = l + 1 < heapSize && heap[l + 1][1] < heap[l][1] ? l + 1 : l;
+        best = heap[best][1] < heap[i][1] ? best : i;
+        if (best == i) break;
+        swap(heap[best], heap[i]);
+        int a = heap[best][0];
+        int b = heap[i][0];
+        where[a] = best;
+        where[b] = i;
+        i = best;
+        l = i * 2 + 1;
+    }
+}
+
+bool isEmpty() {
+    return heapSize == 0;
+}
+
+int prim() {
+    // 1节点出发
+    nodeCnt = 1;
+    where[1] = -2;
+    for (int ei = head[1]; ei > 0; ei = nxt[ei]) {
+        addOrUpdateOrIgnore(ei);
+    }
+    int ans = 0;
+    while (!isEmpty()) {
+        pop();
+        ans += w;
+        for (int ei = head[u]; ei > 0; ei = nxt[ei]) {
+            addOrUpdateOrIgnore(ei);
+        }
+    }
+    return ans;
+}
+```
+
 ---
 
 ## 题目4：水资源分配优化
@@ -79,6 +336,78 @@ n 栋房子，可在房子内建水井（成本 wells[i]），或铺设管道连
 - 虚拟节点 0 的技巧是关键
 - 房子编号从 1 开始，wells 索引从 0 开始
 
+### 代码
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 10010;
+
+struct Edge {
+    int u, v, w;
+} edges[MAXN << 1];
+
+int edgeCnt;
+
+int father[MAXN];
+
+void build(int n) {
+    edgeCnt = 0;
+    for (int i = 0; i <= n; i++) {
+        father[i] = i;
+    }
+}
+
+int find(int i) {
+    if (i != father[i]) {
+        father[i] = find(father[i]);
+    }
+    return father[i];
+}
+
+// 如果x和y，原本是一个集合，返回false
+// 如果x和y，不是一个集合，合并之后后返回true
+bool unionSet(int x, int y) {
+    int fx = find(x);
+    int fy = find(y);
+    if (fx != fy) {
+        father[fx] = fy;
+        return true;
+    } else {
+        return false;
+    }
+}
+
+class Solution {
+public:
+    int minCostToSupplyWater(int n, vector<int>& wells, vector<vector<int>>& pipes) {
+        build(n);
+        for (int i = 0; i < n; i++, edgeCnt++) {
+            // wells : 100   30
+            //         0(1)  1(2)
+            edges[edgeCnt].u = 0;
+            edges[edgeCnt].v = i + 1;
+            edges[edgeCnt].w = wells[i];
+        }
+        for (int i = 0; i < (int)pipes.size(); i++, edgeCnt++) {
+            edges[edgeCnt].u = pipes[i][0];
+            edges[edgeCnt].v = pipes[i][1];
+            edges[edgeCnt].w = pipes[i][2];
+        }
+        sort(edges, edges + edgeCnt, [](const Edge& a, const Edge& b) {
+            return a.w < b.w;
+        });
+        int ans = 0;
+        for (int i = 0; i < edgeCnt; i++) {
+            if (unionSet(edges[i].u, edges[i].v)) {
+                ans += edges[i].w;
+            }
+        }
+        return ans;
+    }
+};
+```
+
 ---
 
 ## 题目5：检查边长度限制的路径是否存在
@@ -99,6 +428,85 @@ n 栋房子，可在房子内建水井（成本 wells[i]），或铺设管道连
 - 询问需要记录原始索引，排序后丢失顺序
 - 使用 struct Question {u, v, limit, idx} 保留原始位置
 
+### 代码
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 100001;
+const int MAXM = 100001;
+
+struct Edge {
+    int u, v, w;
+};
+
+struct Question {
+    int u, v, limit, idx;
+};
+
+Edge edges_global[MAXM];
+Question questions[MAXN];
+int father[MAXN];
+
+void build(int n) {
+    for (int i = 0; i < n; i++) {
+        father[i] = i;
+    }
+}
+
+int find(int i) {
+    if (i != father[i]) {
+        father[i] = find(father[i]);
+    }
+    return father[i];
+}
+
+bool isSameSet(int x, int y) {
+    return find(x) == find(y);
+}
+
+void unionSet(int x, int y) {
+    father[find(x)] = find(y);
+}
+
+class Solution {
+public:
+    vector<bool> distanceLimitedPathsExist(int n, vector<vector<int>>& edgeList, vector<vector<int>>& queries) {
+        int m = edgeList.size();
+        int k = queries.size();
+        // 将edges转为struct数组以便排序
+        for (int i = 0; i < m; i++) {
+            edges_global[i].u = edgeList[i][0];
+            edges_global[i].v = edgeList[i][1];
+            edges_global[i].w = edgeList[i][2];
+        }
+        sort(edges_global, edges_global + m, [](const Edge& a, const Edge& b) {
+            return a.w < b.w;
+        });
+        for (int i = 0; i < k; i++) {
+            questions[i].u = queries[i][0];
+            questions[i].v = queries[i][1];
+            questions[i].limit = queries[i][2];
+            questions[i].idx = i;
+        }
+        sort(questions, questions + k, [](const Question& a, const Question& b) {
+            return a.limit < b.limit;
+        });
+        build(n);
+        vector<bool> ans(k);
+        for (int i = 0, j = 0; i < k; i++) {
+            // i : 问题编号
+            // j : 边的编号
+            for (; j < m && edges_global[j].w < questions[i].limit; j++) {
+                unionSet(edges_global[j].u, edges_global[j].v);
+            }
+            ans[questions[i].idx] = isSameSet(questions[i].u, questions[i].v);
+        }
+        return ans;
+    }
+};
+```
+
 ---
 
 ## 题目6：繁忙的都市（洛谷 P2330）
@@ -116,3 +524,58 @@ Kruskal 天然满足：按分值排序后，前 n-1 条能连通所有路口的�
 ### 坑点
 - 分值更新用 `ans = max(ans, edges[i].w)` 而非累加
 - 输出 `n-1` 和 `ans`（n-1 条边 + 最后加入边的分值）
+
+### 代码
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 301;
+const int MAXM = 8001;
+
+int father[MAXN];
+
+struct Edge {
+    int u, v, w;
+} edges[MAXM];
+
+int n, m;
+
+void build() {
+    for (int i = 1; i <= n; i++) {
+        father[i] = i;
+    }
+}
+
+int find(int i) {
+    if (i != father[i]) {
+        father[i] = find(father[i]);
+    }
+    return father[i];
+}
+
+// 如果x和y本来就是一个集合，返回false
+// 如果x和y不是一个集合，合并之后返回true
+bool unionSet(int x, int y) {
+    int fx = find(x);
+    int fy = find(y);
+    if (fx != fy) {
+        father[fx] = fy;
+        return true;
+    } else {
+        return false;
+    }
+}
+
+// 核心算法：
+// sort(edges, edges + m, [](const Edge& a, const Edge& b) { return a.w < b.w; });
+// int ans = 0, edgeCnt = 0;
+// for (int i = 0; i < m; i++) {
+//     if (unionSet(edges[i].u, edges[i].v)) {
+//         edgeCnt++;
+//         ans = max(ans, edges[i].w);
+//     }
+//     if (edgeCnt == n - 1) break;
+// }
+// cout << n - 1 << ' ' << ans;
+```

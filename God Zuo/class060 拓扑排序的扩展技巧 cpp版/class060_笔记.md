@@ -24,18 +24,69 @@
 
 ### 代码
 ```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 5001;
+const int MAXM = 500001;
+const int MOD = 80112002;
+
+// 链式前向星建图
+int head[MAXN];
+int nxt[MAXM];
+int to[MAXM];
+int cnt;
+
+// 拓扑排序需要的队列
+int queue_[MAXN];
+
+// 拓扑排序需要的入度表
+int indegree[MAXN];
+
+// 拓扑排序需要的推送信息
+int lines[MAXN];
+
+int n, m;
+
+void build(int n) {
+    cnt = 1;
+    for (int i = 0; i <= n; i++) {
+        indegree[i] = 0;
+        lines[i] = 0;
+        head[i] = 0;
+    }
+}
+
+void addEdge(int u, int v) {
+    nxt[cnt] = head[u];
+    to[cnt] = v;
+    head[u] = cnt++;
+}
+
 int ways() {
-    int l = 0, r = 0;
-    for (int i = 1; i <= n; i++)
-        if (indegree[i] == 0) { queue[r++] = i; lines[i] = 1; }
+    int l = 0;
+    int r = 0;
+    for (int i = 1; i <= n; i++) {
+        if (indegree[i] == 0) {
+            queue_[r++] = i;
+            lines[i] = 1;
+        }
+    }
     int ans = 0;
     while (l < r) {
-        int u = queue[l++];
-        if (head[u] == 0) ans = (ans + lines[u]) % MOD;
-        else for (int ei = head[u]; ei > 0; ei = nxt[ei]) {
-            int v = to[ei];
-            lines[v] = (lines[v] + lines[u]) % MOD;
-            if (--indegree[v] == 0) queue[r++] = v;
+        int u = queue_[l++];
+        if (head[u] == 0) {
+            // 当前的u节点不再有后续邻居了
+            ans = (ans + lines[u]) % MOD;
+        } else {
+            for (int ei = head[u], v; ei > 0; ei = nxt[ei]) {
+                // u -> v
+                v = to[ei];
+                lines[v] = (lines[v] + lines[u]) % MOD;
+                if (--indegree[v] == 0) {
+                    queue_[r++] = v;
+                }
+            }
         }
     }
     return ans;
@@ -62,6 +113,60 @@ richer[i]=[ai,bi] 表示 ai 比 bi 更有钱。求对每个人 x，在所有钱�
 - 边方向：ai→bi（有钱指向没钱），入度为 0 的是最有钱的
 - 比较安静值用 `<`（更小=更安静）
 
+### 代码
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 501;
+
+// 拓扑排序，入度表
+int indegree[MAXN];
+
+// 拓扑排序，队列
+int queue_[MAXN];
+int l, r;
+
+class Solution {
+public:
+    vector<int> loudAndRich(vector<vector<int>>& richer, vector<int>& quiet) {
+        int n = quiet.size();
+        // 邻接表建图（和Java一样用动态方式）
+        vector<vector<int>> graph(n);
+        for (int i = 0; i < n; i++) {
+            indegree[i] = 0;
+        }
+        for (auto& r : richer) {
+            graph[r[0]].push_back(r[1]);
+            indegree[r[1]]++;
+        }
+        l = 0;
+        r = 0;
+        for (int i = 0; i < n; i++) {
+            if (indegree[i] == 0) {
+                queue_[r++] = i;
+            }
+        }
+        vector<int> ans(n);
+        for (int i = 0; i < n; i++) {
+            ans[i] = i;
+        }
+        while (l < r) {
+            int cur = queue_[l++];
+            for (int next : graph[cur]) {
+                if (quiet[ans[cur]] < quiet[ans[next]]) {
+                    ans[next] = ans[cur];
+                }
+                if (--indegree[next] == 0) {
+                    queue_[r++] = next;
+                }
+            }
+        }
+        return ans;
+    }
+};
+```
+
 ---
 
 ## 题目3：并行课程III
@@ -81,6 +186,63 @@ n 门课，relations 表示先修关系，time[i] 表示第 i+1 门课耗时。�
 ### 坑点
 - 课程编号从 1 开始，time 索引从 0 开始 → `time[cur-1]`
 - cost 推送取 max（所有先修课中最晚完成的那个决定开始时间）
+
+### 代码
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 50001;
+
+// 拓扑排序，入度表
+int indegree[MAXN];
+
+// 拓扑排序，队列
+int queue_[MAXN];
+int l, r;
+
+// cost[i] : 完成课程i的最早时间
+int cost[MAXN];
+
+class Solution {
+public:
+    int minimumTime(int n, vector<vector<int>>& relations, vector<int>& time) {
+        // 点 : 1....n
+        // 邻接表建图（和Java一样用动态方式）
+        vector<vector<int>> graph(n + 1);
+        for (int i = 0; i <= n; i++) {
+            indegree[i] = 0;
+            cost[i] = 0;
+        }
+        for (auto& edge : relations) {
+            graph[edge[0]].push_back(edge[1]);
+            indegree[edge[1]]++;
+        }
+        l = 0;
+        r = 0;
+        for (int i = 1; i <= n; i++) {
+            if (indegree[i] == 0) {
+                queue_[r++] = i;
+            }
+        }
+        int ans = 0;
+        while (l < r) {
+            int cur = queue_[l++];
+            // 1 : time[0]
+            // x : time[x-1]
+            cost[cur] += time[cur - 1];
+            ans = max(ans, cost[cur]);
+            for (int next : graph[cur]) {
+                cost[next] = max(cost[next], cost[cur]);
+                if (--indegree[next] == 0) {
+                    queue_[r++] = next;
+                }
+            }
+        }
+        return ans;
+    }
+};
+```
 
 ---
 
@@ -106,3 +268,71 @@ n 个员工坐圆桌，每人有一个喜欢的人。只有坐在喜欢的人旁
 - 环 size=2 可以带上两侧链条（因为两人坐一起，链条可以分别靠在两侧）
 - 环 size>2 链条无法插入（会破坏环结构）
 - 答案取两种可能性的最大值
+
+### 代码
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 100001;
+
+int indegree[MAXN];
+int queue_[MAXN];
+int l, r;
+int deep[MAXN];
+
+class Solution {
+public:
+    int maximumInvitations(vector<int>& favorite) {
+        // 图 : favorite[a] = b : a -> b
+        int n = favorite.size();
+        for (int i = 0; i < n; i++) {
+            indegree[i] = 0;
+        }
+        for (int i = 0; i < n; i++) {
+            indegree[favorite[i]]++;
+        }
+        l = 0;
+        r = 0;
+        for (int i = 0; i < n; i++) {
+            if (indegree[i] == 0) {
+                queue_[r++] = i;
+            }
+        }
+        // deep[i] : 不包括i在内，i之前的最长链的长度
+        for (int i = 0; i < n; i++) {
+            deep[i] = 0;
+        }
+        while (l < r) {
+            int cur = queue_[l++];
+            int next = favorite[cur];
+            deep[next] = max(deep[next], deep[cur] + 1);
+            if (--indegree[next] == 0) {
+                queue_[r++] = next;
+            }
+        }
+        // 目前图中的点，不在环上的点，都删除了！ indegree[i] == 0
+        // 可能性1 : 所有小环(中心个数 == 2)，算上中心点 + 延伸点，总个数
+        int sumOfSmallRings = 0;
+        // 可能性2 : 所有大环(中心个数 > 2)，只算中心点，最大环的中心点个数
+        int bigRings = 0;
+        for (int i = 0; i < n; i++) {
+            // 只关心的环！
+            if (indegree[i] > 0) {
+                int ringSize = 1;
+                indegree[i] = 0;
+                for (int j = favorite[i]; j != i; j = favorite[j]) {
+                    ringSize++;
+                    indegree[j] = 0;
+                }
+                if (ringSize == 2) {
+                    sumOfSmallRings += 2 + deep[i] + deep[favorite[i]];
+                } else {
+                    bigRings = max(bigRings, ringSize);
+                }
+            }
+        }
+        return max(sumOfSmallRings, bigRings);
+    }
+};
+```

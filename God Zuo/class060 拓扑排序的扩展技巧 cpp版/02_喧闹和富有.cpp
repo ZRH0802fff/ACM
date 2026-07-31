@@ -15,14 +15,11 @@
 using namespace std;
 
 const int MAXN = 501;
-const int MAXM = 125001; // n*(n-1)/2 最大约12.5万
 
-int head[MAXN];
-int nxt[MAXM];
-int to[MAXM];
-int graphCnt;
-
+// 拓扑排序，入度表
 int indegree[MAXN];
+
+// 拓扑排序，队列
 int queue_[MAXN];
 int l, r;
 
@@ -30,17 +27,14 @@ class Solution {
 public:
     vector<int> loudAndRich(vector<vector<int>>& richer, vector<int>& quiet) {
         int n = quiet.size();
-        graphCnt = 1;
+        // 邻接表建图（和Java一样用动态方式）
+        vector<vector<int>> graph(n);
         for (int i = 0; i < n; i++) {
-            head[i] = 0;
             indegree[i] = 0;
         }
         for (auto& r : richer) {
-            int u = r[0], v = r[1];
-            nxt[graphCnt] = head[u];
-            to[graphCnt] = v;
-            head[u] = graphCnt++;
-            indegree[v]++;
+            graph[r[0]].push_back(r[1]);
+            indegree[r[1]]++;
         }
         l = 0;
         r = 0;
@@ -55,8 +49,7 @@ public:
         }
         while (l < r) {
             int cur = queue_[l++];
-            for (int ei = head[cur]; ei > 0; ei = nxt[ei]) {
-                int next = to[ei];
+            for (int next : graph[cur]) {
                 if (quiet[ans[cur]] < quiet[ans[next]]) {
                     ans[next] = ans[cur];
                 }

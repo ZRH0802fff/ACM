@@ -13,11 +13,16 @@
 #include <bits/stdc++.h>
 using namespace std;
 
+// 入度表，26种字符
+int indegree[26];
+
+// 拓扑排序，队列
+int queue_[26];
+int l, r;
+
 class Solution {
 public:
     string alienOrder(vector<string>& words) {
-        // 入度表，26种字符
-        int indegree[26];
         for (int i = 0; i < 26; i++) {
             indegree[i] = -1;
         }
@@ -30,12 +35,8 @@ public:
         // 'b' -> 1
         // 'z' -> 25
         // x -> x - 'a'
-        // 邻接表，最多26个节点，每个节点最多26条边
-        int graph[26][26];
-        int graphCnt[26];
-        for (int i = 0; i < 26; i++) {
-            graphCnt[i] = 0;
-        }
+        // 邻接表建图（和Java一样用动态方式）
+        vector<vector<int>> graph(26);
         for (int i = 0, j, len; i < (int)words.size() - 1; i++) {
             string& cur = words[i];
             string& next = words[i + 1];
@@ -43,10 +44,8 @@ public:
             len = min((int)cur.length(), (int)next.length());
             for (; j < len; j++) {
                 if (cur[j] != next[j]) {
-                    int from = cur[j] - 'a';
-                    int to = next[j] - 'a';
-                    graph[from][graphCnt[from]++] = to;
-                    indegree[to]++;
+                    graph[cur[j] - 'a'].push_back(next[j] - 'a');
+                    indegree[next[j] - 'a']++;
                     break;
                 }
             }
@@ -54,25 +53,23 @@ public:
                 return "";
             }
         }
-        int queue[26];
-        int l = 0, r = 0;
+        l = 0, r = 0;
         int kinds = 0;
         for (int i = 0; i < 26; i++) {
             if (indegree[i] != -1) {
                 kinds++;
             }
             if (indegree[i] == 0) {
-                queue[r++] = i;
+                queue_[r++] = i;
             }
         }
         string ans;
         while (l < r) {
-            int cur = queue[l++];
+            int cur = queue_[l++];
             ans += (char)(cur + 'a');
-            for (int j = 0; j < graphCnt[cur]; j++) {
-                int next = graph[cur][j];
+            for (int next : graph[cur]) {
                 if (--indegree[next] == 0) {
-                    queue[r++] = next;
+                    queue_[r++] = next;
                 }
             }
         }

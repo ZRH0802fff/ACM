@@ -13,6 +13,7 @@
 using namespace std;
 
 const int MAXN = 100001;
+const int MAXM = 100001;
 
 struct Edge {
     int u, v, w;
@@ -22,6 +23,7 @@ struct Question {
     int u, v, limit, idx;
 };
 
+Edge edges_global[MAXM];
 Question questions[MAXN];
 int father[MAXN];
 
@@ -52,13 +54,12 @@ public:
         int m = edgeList.size();
         int k = queries.size();
         // 将edges转为struct数组以便排序
-        vector<Edge> edges(m);
         for (int i = 0; i < m; i++) {
-            edges[i].u = edgeList[i][0];
-            edges[i].v = edgeList[i][1];
-            edges[i].w = edgeList[i][2];
+            edges_global[i].u = edgeList[i][0];
+            edges_global[i].v = edgeList[i][1];
+            edges_global[i].w = edgeList[i][2];
         }
-        sort(edges.begin(), edges.end(), [](const Edge& a, const Edge& b) {
+        sort(edges_global, edges_global + m, [](const Edge& a, const Edge& b) {
             return a.w < b.w;
         });
         for (int i = 0; i < k; i++) {
@@ -75,8 +76,8 @@ public:
         for (int i = 0, j = 0; i < k; i++) {
             // i : 问题编号
             // j : 边的编号
-            for (; j < m && edges[j].w < questions[i].limit; j++) {
-                unionSet(edges[j].u, edges[j].v);
+            for (; j < m && edges_global[j].w < questions[i].limit; j++) {
+                unionSet(edges_global[j].u, edges_global[j].v);
             }
             ans[questions[i].idx] = isSameSet(questions[i].u, questions[i].v);
         }

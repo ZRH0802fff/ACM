@@ -36,6 +36,127 @@ for (int ei = head[u]; ei > 0; ei = nxt[ei]) {
 - 无向图时 MAXM 要准备 m*2
 - 链式前向星 cnt 初始化为 1，head 初始化为 0
 
+### 代码
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+// 点的最大数量
+const int MAXN = 11;
+
+// 边的最大数量
+// 只有链式前向星方式建图需要这个数量
+// 注意如果无向图的最大数量是m条边，数量要准备m*2
+// 因为一条无向边要加两条有向边
+const int MAXM = 21;
+
+// 邻接矩阵方式建图
+int graph1[MAXN][MAXN];
+
+// 邻接表方式建图
+// graph2[i] = {{邻居, 边权}, ...}
+vector<vector<pair<int, int>>> graph2;
+
+// 链式前向星方式建图
+int head[MAXN];
+int nxt[MAXM];
+int to[MAXM];
+
+// 如果边有权重，那么需要这个数组
+int weight[MAXM];
+
+int cnt;
+
+void build(int n) {
+    // 邻接矩阵清空
+    for (int i = 1; i <= n; i++) {
+        for (int j = 1; j <= n; j++) {
+            graph1[i][j] = 0;
+        }
+    }
+    // 邻接表清空和准备
+    // 下标需要支持1~n，所以加入n+1个列表，0下标准备但不用
+    graph2.clear();
+    graph2.resize(n + 1);
+    // 链式前向星清空
+    cnt = 1;
+    for (int i = 1; i <= n; i++) {
+        head[i] = 0;
+    }
+}
+
+// 链式前向星加边
+void addEdge(int u, int v, int w) {
+    // u -> v , 边权重是w
+    nxt[cnt] = head[u];
+    to[cnt] = v;
+    weight[cnt] = w;
+    head[u] = cnt++;
+}
+
+// 三种方式建立有向图带权图
+void directGraph(int n, int edges[][3], int m) {
+    // 邻接矩阵建图
+    for (int i = 0; i < m; i++) {
+        graph1[edges[i][0]][edges[i][1]] = edges[i][2];
+    }
+    // 邻接表建图
+    for (int i = 0; i < m; i++) {
+        graph2[edges[i][0]].push_back({edges[i][1], edges[i][2]});
+    }
+    // 链式前向星建图
+    for (int i = 0; i < m; i++) {
+        addEdge(edges[i][0], edges[i][1], edges[i][2]);
+    }
+}
+
+// 三种方式建立无向图带权图
+void undirectGraph(int n, int edges[][3], int m) {
+    // 邻接矩阵建图
+    for (int i = 0; i < m; i++) {
+        graph1[edges[i][0]][edges[i][1]] = edges[i][2];
+        graph1[edges[i][1]][edges[i][0]] = edges[i][2];
+    }
+    // 邻接表建图
+    for (int i = 0; i < m; i++) {
+        graph2[edges[i][0]].push_back({edges[i][1], edges[i][2]});
+        graph2[edges[i][1]].push_back({edges[i][0], edges[i][2]});
+    }
+    // 链式前向星建图
+    for (int i = 0; i < m; i++) {
+        addEdge(edges[i][0], edges[i][1], edges[i][2]);
+        addEdge(edges[i][1], edges[i][0], edges[i][2]);
+    }
+}
+
+void traversal(int n) {
+    cout << "邻接矩阵遍历 :" << endl;
+    for (int i = 1; i <= n; i++) {
+        for (int j = 1; j <= n; j++) {
+            cout << graph1[i][j] << " ";
+        }
+        cout << endl;
+    }
+    cout << "邻接表遍历 :" << endl;
+    for (int i = 1; i <= n; i++) {
+        cout << i << "(邻居、边权) : ";
+        for (auto& edge : graph2[i]) {
+            cout << "(" << edge.first << "," << edge.second << ") ";
+        }
+        cout << endl;
+    }
+    cout << "链式前向星 :" << endl;
+    for (int i = 1; i <= n; i++) {
+        cout << i << "(邻居、边权) : ";
+        // 注意这个for循环，链式前向星的方式遍历
+        for (int ei = head[i]; ei > 0; ei = nxt[ei]) {
+            cout << "(" << to[ei] << "," << weight[ei] << ") ";
+        }
+        cout << endl;
+    }
+}
+```
+
 ---
 
 ## 题目2：课程表II（拓扑排序模版）
@@ -58,15 +179,54 @@ numCourses 门课，prerequisites[i]=[ai,bi] 表示修 ai 前必须先修 bi。�
 
 ### 代码
 ```cpp
-int l = 0, r = 0;
-for (int i = 0; i < n; i++)
-    if (indegree[i] == 0) queue[r++] = i;
-while (l < r) {
-    int cur = queue[l++];
-    for (int next : graph[cur])
-        if (--indegree[next] == 0) queue[r++] = next;
-}
-return (cnt == n) ? queue : empty;
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 2005;
+
+// 拓扑排序，入度表
+int indegree[MAXN];
+
+// 拓扑排序，用到队列
+int queue_[MAXN];
+int l, r;
+
+class Solution {
+public:
+    vector<int> findOrder(int numCourses, vector<vector<int>>& prerequisites) {
+        // 邻接表建图（和Java一样用动态方式）
+        vector<vector<int>> graph(numCourses);
+        // 入度表初始化
+        for (int i = 0; i < numCourses; i++) {
+            indegree[i] = 0;
+        }
+        for (auto& edge : prerequisites) {
+            graph[edge[1]].push_back(edge[0]);
+            indegree[edge[0]]++;
+        }
+        l = 0;
+        r = 0;
+        for (int i = 0; i < numCourses; i++) {
+            if (indegree[i] == 0) {
+                queue_[r++] = i;
+            }
+        }
+        int cnt = 0;
+        while (l < r) {
+            int cur = queue_[l++];
+            cnt++;
+            for (int next : graph[cur]) {
+                if (--indegree[next] == 0) {
+                    queue_[r++] = next;
+                }
+            }
+        }
+        if (cnt == numCourses) {
+            return vector<int>(queue_, queue_ + numCourses);
+        }
+        return vector<int>();
+    }
+};
 ```
 
 ---
@@ -87,6 +247,132 @@ return (cnt == n) ? queue : empty;
 - 点多边多（n,m≤200000），必须用链式前向星防卡空间
 - 入度表、队列等全部用全局静态数组
 
+### 代码（动态版）
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200001;
+
+// 拓扑排序，用到队列
+int queue_[MAXN];
+int l, r;
+
+// 拓扑排序，入度表
+int indegree[MAXN];
+
+// 收集拓扑排序的结果
+int ans[MAXN];
+
+// 邻接表建图
+int head[MAXN];
+int nxt[MAXN];
+int to[MAXN];
+int graphCnt;
+
+int n, m;
+
+void build(int n) {
+    graphCnt = 1;
+    for (int i = 0; i <= n; i++) {
+        head[i] = 0;
+        indegree[i] = 0;
+    }
+}
+
+void addEdge(int f, int t) {
+    nxt[graphCnt] = head[f];
+    to[graphCnt] = t;
+    head[f] = graphCnt++;
+}
+
+// 有拓扑排序返回true
+// 没有拓扑排序返回false
+bool topoSort() {
+    l = r = 0;
+    for (int i = 1; i <= n; i++) {
+        if (indegree[i] == 0) {
+            queue_[r++] = i;
+        }
+    }
+    int fill = 0;
+    while (l < r) {
+        int cur = queue_[l++];
+        ans[fill++] = cur;
+        // 用链式前向星的方式，遍历cur的相邻节点
+        for (int ei = head[cur]; ei > 0; ei = nxt[ei]) {
+            if (--indegree[to[ei]] == 0) {
+                queue_[r++] = to[ei];
+            }
+        }
+    }
+    return fill == n;
+}
+```
+
+### 代码（静态版）
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200001;
+const int MAXM = 200001;
+
+// 建图相关，链式前向星
+int head[MAXN];
+int nxt[MAXM];
+int to[MAXM];
+int cnt;
+
+// 拓扑排序，用到队列
+int queue_[MAXN];
+int l, r;
+
+// 拓扑排序，入度表
+int indegree[MAXN];
+
+// 收集拓扑排序的结果
+int ans[MAXN];
+
+int n, m;
+
+void build(int n) {
+    cnt = 1;
+    for (int i = 0; i <= n; i++) {
+        head[i] = 0;
+        indegree[i] = 0;
+    }
+}
+
+// 用链式前向星建图
+void addEdge(int f, int t) {
+    nxt[cnt] = head[f];
+    to[cnt] = t;
+    head[f] = cnt++;
+}
+
+bool topoSort() {
+    l = r = 0;
+    for (int i = 1; i <= n; i++) {
+        if (indegree[i] == 0) {
+            queue_[r++] = i;
+        }
+    }
+    int fill = 0;
+    while (l < r) {
+        int cur = queue_[l++];
+        ans[fill++] = cur;
+        // 用链式前向星的方式，遍历cur的相邻节点
+        for (int ei = head[cur]; ei != 0; ei = nxt[ei]) {
+            if (--indegree[to[ei]] == 0) {
+                queue_[r++] = to[ei];
+            }
+        }
+    }
+    return fill == n;
+}
+```
+
 ---
 
 ## 题目5：字典序最小的拓扑排序（洛谷）
@@ -103,6 +389,105 @@ return (cnt == n) ? queue : empty;
 ### 坑点
 - 不能用优先队列（STL），手写小根堆保持静态风格
 - 堆操作注意维护 heapSize
+
+### 代码
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 100001;
+const int MAXM = 100001;
+
+// 建图相关，链式前向星
+int head[MAXN];
+int nxt[MAXM];
+int to[MAXM];
+int cnt;
+
+// 拓扑排序，不用队列，用小根堆，为了得到字典序最小的拓扑排序
+int heap[MAXN];
+int heapSize;
+
+// 拓扑排序，入度表
+int indegree[MAXN];
+
+// 收集拓扑排序的结果
+int ans[MAXN];
+
+int n, m;
+
+// 清理之前的脏数据
+void build(int n) {
+    cnt = 1;
+    heapSize = 0;
+    for (int i = 0; i <= n; i++) {
+        head[i] = 0;
+        indegree[i] = 0;
+    }
+}
+
+// 用链式前向星建图
+void addEdge(int f, int t) {
+    nxt[cnt] = head[f];
+    to[cnt] = t;
+    head[f] = cnt++;
+}
+
+// 小根堆里加入数字
+void push(int num) {
+    int i = heapSize++;
+    heap[i] = num;
+    // heapInsert的过程
+    while (heap[i] < heap[(i - 1) / 2]) {
+        swap(heap[i], heap[(i - 1) / 2]);
+        i = (i - 1) / 2;
+    }
+}
+
+// 小根堆里弹出最小值
+int pop() {
+    int ans = heap[0];
+    heap[0] = heap[--heapSize];
+    // heapify的过程
+    int i = 0;
+    int l = 1;
+    while (l < heapSize) {
+        int best = l + 1 < heapSize && heap[l + 1] < heap[l] ? l + 1 : l;
+        best = heap[best] < heap[i] ? best : i;
+        if (best == i) {
+            break;
+        }
+        swap(heap[best], heap[i]);
+        i = best;
+        l = i * 2 + 1;
+    }
+    return ans;
+}
+
+// 判断小根堆是否为空
+bool isEmpty() {
+    return heapSize == 0;
+}
+
+void topoSort() {
+    for (int i = 1; i <= n; i++) {
+        if (indegree[i] == 0) {
+            push(i);
+        }
+    }
+    int fill = 0;
+    while (!isEmpty()) {
+        int cur = pop();
+        ans[fill++] = cur;
+        // 用链式前向星的方式，遍历cur的相邻节点
+        for (int ei = head[cur]; ei != 0; ei = nxt[ei]) {
+            if (--indegree[to[ei]] == 0) {
+                push(to[ei]);
+            }
+        }
+    }
+}
+```
 
 ---
 
@@ -122,6 +507,76 @@ return (cnt == n) ? queue : empty;
 ### 坑点
 - indegree 初始化为 -1 标记未出现，出现过的字符才设为 0
 - 前缀矛盾检查：`j < cur.length() && j == next.length()`
+
+### 代码
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+// 入度表，26种字符
+int indegree[26];
+
+// 拓扑排序，队列
+int queue_[26];
+int l, r;
+
+class Solution {
+public:
+    string alienOrder(vector<string>& words) {
+        for (int i = 0; i < 26; i++) {
+            indegree[i] = -1;
+        }
+        for (string& w : words) {
+            for (char c : w) {
+                indegree[c - 'a'] = 0;
+            }
+        }
+        // 'a' -> 0
+        // 'b' -> 1
+        // 'z' -> 25
+        // x -> x - 'a'
+        // 邻接表建图（和Java一样用动态方式）
+        vector<vector<int>> graph(26);
+        for (int i = 0, j, len; i < (int)words.size() - 1; i++) {
+            string& cur = words[i];
+            string& next = words[i + 1];
+            j = 0;
+            len = min((int)cur.length(), (int)next.length());
+            for (; j < len; j++) {
+                if (cur[j] != next[j]) {
+                    graph[cur[j] - 'a'].push_back(next[j] - 'a');
+                    indegree[next[j] - 'a']++;
+                    break;
+                }
+            }
+            if (j < (int)cur.length() && j == (int)next.length()) {
+                return "";
+            }
+        }
+        l = 0, r = 0;
+        int kinds = 0;
+        for (int i = 0; i < 26; i++) {
+            if (indegree[i] != -1) {
+                kinds++;
+            }
+            if (indegree[i] == 0) {
+                queue_[r++] = i;
+            }
+        }
+        string ans;
+        while (l < r) {
+            int cur = queue_[l++];
+            ans += (char)(cur + 'a');
+            for (int next : graph[cur]) {
+                if (--indegree[next] == 0) {
+                    queue_[r++] = next;
+                }
+            }
+        }
+        return (int)ans.length() == kinds ? ans : "";
+    }
+};
+```
 
 ---
 
@@ -145,3 +600,102 @@ return (cnt == n) ? queue : empty;
 - 依赖方向：错误位置 j → 依赖它的盖章起始位置 i
 - 最终结果需要逆序
 - visited 数组防重复统计同位置错误
+
+### 代码
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 1001;
+const int MAXM = 1001;
+
+// 邻接表建图
+int head[MAXN];
+int nxt[MAXN * MAXM];
+int to[MAXN * MAXM];
+int graphCnt;
+
+int indegree[MAXN];
+int queue_[MAXN];
+int l, r;
+bool visited[MAXN];
+int path[MAXN];
+int pathSize;
+
+void build(int n) {
+    graphCnt = 1;
+    for (int i = 0; i <= n; i++) {
+        head[i] = 0;
+    }
+}
+
+void addEdge(int f, int t) {
+    nxt[graphCnt] = head[f];
+    to[graphCnt] = t;
+    head[f] = graphCnt++;
+}
+
+class Solution {
+public:
+    vector<int> movesToStamp(string stamp, string target) {
+        char* s = &stamp[0];
+        char* t = &target[0];
+        int m = stamp.length();
+        int n = target.length();
+        // indegree[i]表示以i位置开头盖印章，有多少个字符已经和最终目标一致
+        for (int i = 0; i <= n - m; i++) {
+            indegree[i] = m;
+        }
+        build(n);
+        l = 0, r = 0;
+        // O(n*m)
+        for (int i = 0; i <= n - m; i++) {
+            // i开头....(m个)
+            // i+0 i+1 i+m-1
+            for (int j = 0; j < m; j++) {
+                if (t[i + j] == s[j]) {
+                    if (--indegree[i] == 0) {
+                        queue_[r++] = i;
+                    }
+                } else {
+                    // i + j
+                    // from : 错误的位置
+                    // to : i开头的下标
+                    addEdge(i + j, i);
+                }
+            }
+        }
+        // 同一个位置取消错误不要重复统计
+        for (int i = 0; i < n; i++) {
+            visited[i] = false;
+        }
+        pathSize = 0;
+        while (l < r) {
+            int cur = queue_[l++];
+            path[pathSize++] = cur;
+            for (int i = 0; i < m; i++) {
+                // cur : 开头位置
+                // cur + 0 cur + 1 cur + 2 ... cur + m - 1
+                if (!visited[cur + i]) {
+                    visited[cur + i] = true;
+                    for (int ei = head[cur + i]; ei > 0; ei = nxt[ei]) {
+                        int next = to[ei];
+                        if (--indegree[next] == 0) {
+                            queue_[r++] = next;
+                        }
+                    }
+                }
+            }
+        }
+        if (pathSize != n - m + 1) {
+            return vector<int>();
+        }
+        // path逆序调整
+        vector<int> result(pathSize);
+        for (int i = 0; i < pathSize; i++) {
+            result[i] = path[pathSize - 1 - i];
+        }
+        return result;
+    }
+};
+```

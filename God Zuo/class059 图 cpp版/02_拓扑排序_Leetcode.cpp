@@ -12,36 +12,47 @@
 #include <bits/stdc++.h>
 using namespace std;
 
+const int MAXN = 2005;
+
+// 拓扑排序，入度表
+int indegree[MAXN];
+
+// 拓扑排序，用到队列
+int queue_[MAXN];
+int l, r;
+
 class Solution {
 public:
     vector<int> findOrder(int numCourses, vector<vector<int>>& prerequisites) {
+        // 邻接表建图（和Java一样用动态方式）
         vector<vector<int>> graph(numCourses);
-        // 入度表
-        vector<int> indegree(numCourses, 0);
+        // 入度表初始化
+        for (int i = 0; i < numCourses; i++) {
+            indegree[i] = 0;
+        }
         for (auto& edge : prerequisites) {
             graph[edge[1]].push_back(edge[0]);
             indegree[edge[0]]++;
         }
-        vector<int> queue(numCourses);
-        int l = 0;
-        int r = 0;
+        l = 0;
+        r = 0;
         for (int i = 0; i < numCourses; i++) {
             if (indegree[i] == 0) {
-                queue[r++] = i;
+                queue_[r++] = i;
             }
         }
         int cnt = 0;
         while (l < r) {
-            int cur = queue[l++];
+            int cur = queue_[l++];
             cnt++;
             for (int next : graph[cur]) {
                 if (--indegree[next] == 0) {
-                    queue[r++] = next;
+                    queue_[r++] = next;
                 }
             }
         }
         if (cnt == numCourses) {
-            return queue;
+            return vector<int>(queue_, queue_ + numCourses);
         }
         return vector<int>();
     }

@@ -15,34 +15,30 @@
 using namespace std;
 
 const int MAXN = 50001;
-const int MAXM = 50001;
 
-int head[MAXN];
-int nxt[MAXM];
-int to[MAXM];
-int graphCnt;
-
+// 拓扑排序，入度表
 int indegree[MAXN];
+
+// 拓扑排序，队列
 int queue_[MAXN];
 int l, r;
+
+// cost[i] : 完成课程i的最早时间
 int cost[MAXN];
 
 class Solution {
 public:
     int minimumTime(int n, vector<vector<int>>& relations, vector<int>& time) {
         // 点 : 1....n
-        graphCnt = 1;
+        // 邻接表建图（和Java一样用动态方式）
+        vector<vector<int>> graph(n + 1);
         for (int i = 0; i <= n; i++) {
-            head[i] = 0;
             indegree[i] = 0;
             cost[i] = 0;
         }
         for (auto& edge : relations) {
-            int u = edge[0], v = edge[1];
-            nxt[graphCnt] = head[u];
-            to[graphCnt] = v;
-            head[u] = graphCnt++;
-            indegree[v]++;
+            graph[edge[0]].push_back(edge[1]);
+            indegree[edge[1]]++;
         }
         l = 0;
         r = 0;
@@ -58,8 +54,7 @@ public:
             // x : time[x-1]
             cost[cur] += time[cur - 1];
             ans = max(ans, cost[cur]);
-            for (int ei = head[cur]; ei > 0; ei = nxt[ei]) {
-                int next = to[ei];
+            for (int next : graph[cur]) {
                 cost[next] = max(cost[next], cost[cur]);
                 if (--indegree[next] == 0) {
                     queue_[r++] = next;
