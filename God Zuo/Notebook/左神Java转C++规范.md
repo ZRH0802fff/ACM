@@ -35,17 +35,18 @@
    using namespace std;
    ```
 
-4. **🔥 与 Java 保持一致的规则（最重要）**：
+4. **🔥 数组选择规则（最重要）**：
 
-   **核心原则：Java 用静态就转成 C++ 全局静态数组，Java 用动态就转成 C++ vector。**
+   **核心原则：Java 普通数组（无论 `static` 还是局部 `new int[n]`）→ C++ 全局静态数组；Java `ArrayList` → C++ `vector`。**
 
    | Java | C++ | 示例 |
    |---|---|---|
    | `static int[] indegree` | 全局 `int indegree[MAXN]` | 类级别静态数组 |
    | `static int[][] dp` | 全局 `int dp[MAXN][MAXM]` | DP 缓存表 |
+   | 局部 `new int[n]` / `new int[n][m]` | 全局 `int a[MAXN]` / `int dp[MAXN][MAXM]` | 普通数组，运行时才知道大小就开比最大数据量稍大的全局数组 |
    | `static int[] father` | 全局 `int father[MAXN]` | 并查集 |
    | `static int[] head/next/to` | 全局 `int head[MAXN]` 等 | 链式前向星 |
-   | 局部 `ArrayList<ArrayList<>>` | 局部 `vector<vector<int>>` | 动态邻接表 |
+   | `ArrayList<ArrayList<>>` | `vector<vector<int>>` | 动态数组（唯一用 vector 的地方） |
    | 局部 `int[] edges`（需排序） | 全局 `Edge edges[MAXM]` | C 数组无法 sort |
 
    **额外硬性规定（不受上述规则影响）**：
@@ -58,10 +59,10 @@
    - LeetCode 函数签名中的 `vector<int>&` 传参保留，返回值可用 `vector<int>` 以匹配接口。
 
    **判断流程**：
-   1. 先看 Java 源码：这个数组是 `static` 类成员还是方法内局部变量？
-   2. `static` → C++ 全局静态数组
-   3. 局部 `ArrayList` → C++ 局部 `vector`
-   4. 局部 `int[]` 且不是拓扑 indegree/queue → 看情况（能定长用全局，需排序用全局 struct 数组）
+   1. 先看 Java 源码：它是普通数组（`int[]` / `int[][]`）还是 `ArrayList`？
+   2. 普通数组（无论 `static` 还是局部 `new`）→ C++ 全局静态数组
+   3. `ArrayList` → C++ `vector`
+   4. 普通数组需要排序 → 全局 `struct` 数组
    5. 拓扑 indegree/queue → 不管 Java 怎么写，一律全局
 
 ### 1.2 LeetCode 题目 vs 非 LeetCode 题目
@@ -168,9 +169,9 @@ int main() {
 
 ## 三、C++ 化要点（语法对照表）
 
-### 3.1 数组 — 彻底不用 vector，全部用全局静态数组
+### 3.1 普通数组 — 一律用全局静态数组，不用 vector
 
-这是最重要的规则。
+这是最重要的规则。Java 的普通数组（`int[]` / `int[][]`，无论 `static` 还是局部 `new`）都转成 C++ 全局静态数组。
 
 ```cpp
 // ❌ 错误：用 vector
@@ -187,7 +188,9 @@ memset(dp, -1, sizeof(dp));
 memset(dp, 0, sizeof(dp));  // 严格位置依赖的DP必须显式清零
 ```
 
-**「彻底不用 vector」的唯一例外**：LeetCode 题目函数签名中的传参是 `vector`，此时保留以匹配接口。但自己实现的部分仍用全局数组。
+**「不用 vector」的两个例外**：
+1. Java 的 `ArrayList` → C++ `vector`
+2. LeetCode 题目函数签名中的传参是 `vector`，保留以匹配接口（但自己实现的部分仍用全局数组）
 
 ```cpp
 // ✅ 例外：接口本身就是 vector，保留
@@ -404,6 +407,8 @@ memset(dp, 0, sizeof(dp));
 | class077 | 区间DP（下） | 6 | |
 | class078 | 树型DP | 7 | |
 | class079 | 树型DP和树上背包 | 6 | |
+| class086 | 动态规划中得到具体决策方案的技巧 | 4 | |
+| class087 | 动态规划中根据数据量猜解法的技巧 | 4 | |
 
 > 完成新 class 的转换后，在此表添加一行记录。
 
@@ -415,7 +420,7 @@ memset(dp, 0, sizeof(dp));
 
 - [ ] `#include <bits/stdc++.h>` + `using namespace std;`
 - [ ] Java 所有注释完整保留
-- [ ] `vector` 全部替换为全局静态数组（接口参数除外）
+- [ ] 普通数组全部替换为全局静态数组（`ArrayList` 和接口参数除外）
 - [ ] 类成员数组已 `memset`
 - [ ] STL 栈/队列替换为数组模拟
 - [ ] C 风格多维数组改为 struct
