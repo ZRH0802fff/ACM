@@ -1,28 +1,38 @@
 #include<bits/stdc++.h>
 using namespace std;
+#define int long long
 
 string s;
-int n,lens;
-int dp[45][100010];
+int n,res;
+int dp[42][100010];
+int num[42][42];
 
-int main(){
-    ios::sync_with_stdio(false);
-    cin.tie(nullptr);
-    cin >> s >> n;
-    lens = s.length();
-    for (int j = 0; j < n;++j){
-        dp[0][j] = INT_MAX;
-    }
-    for (int i = 0; i < lens; ++i){
-        dp[i][0] = INT_MAX;
-    }
-    dp[0][(int)s[0]] = 0;
-    for (int i = 1; i < lens;++i){
-        int num = (int)s[i];
-        for (int j = num; j <= n;++j){
-            dp[i][j] = min(dp[i - 1][j], dp[i][j - num]+1);
+signed main(){
+    cin>>s>>res;
+    n=s.length();
+    memset(dp,0x3f,sizeof(dp));
+
+    for(int i=1;i<=n;++i){
+        for(int j=i;j<=n;++j){
+            num[i][j]=num[i][j-1]*10+(s[j-1]-'0');
         }
     }
-    cout << dp[lens][n] << '\n';
+    dp[0][0]=-1;
+    for(int i=1;i<=n;++i){
+        for(int k=0;k<=res;++k){
+            for(int j=i-1;j>=0 && num[j+1][i]<=res;--j){
+                if(num[j+1][i]<=k){
+                    dp[i][k]=min(dp[i][k],dp[j][k-num[j+1][i]]+1);
+                }
+            }
+        }
+    }
+
+    if(dp[n][res]<45){
+        cout<<dp[n][res]<<'\n';
+    }else{
+        cout<<-1<<'\n';
+    }
+
     return 0;
 }

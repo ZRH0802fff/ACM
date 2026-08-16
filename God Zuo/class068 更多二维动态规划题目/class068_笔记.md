@@ -10,6 +10,7 @@
 给两个字符串 s 和 t，统计在 s 的**子序列**中 t 出现的次数（子序列可以不连续，但不能改变相对次序）。答案对 1000000007 取模。
 
 - LeetCode 115: https://leetcode.cn/problems/distinct-subsequences/
+- s、t 长度 ≤ 1000
 
 ### 核心思路
 **二维 DP，从末尾字符讨论**：
@@ -20,13 +21,18 @@
 - 每个格子依赖**上方**和**左上角**，从左往右、从上往下填即可
 
 ### 坑点
-- 用 `unsigned long long` 防溢出，取模版用 `int` + `MOD = 1000000007`
+- 用 `unsigned long long` 防溢出，取模版用 `int` + `mod = 1000000007`
 - 空间压缩：从右往左更新（因为依赖左上角），`dp[0]=1`
 
 ### 代码
 ```cpp
-#include <bits/stdc++.h>
-using namespace std;
+// s、t 的长度 <= 1000
+const int MAXN = 1001;
+const int MAXM = 1001;
+
+unsigned long long dp[MAXN][MAXM];
+unsigned long long dp1D[MAXM];
+int dpMod[MAXM];
 
 class Solution {
 public:
@@ -35,7 +41,7 @@ public:
     int numDistinct1(string str, string target) {
         int n = str.length();
         int m = target.length();
-        vector<vector<unsigned long long>> dp(n + 1, vector<unsigned long long>(m + 1, 0));
+        memset(dp, 0, sizeof(dp));
         for (int i = 0; i <= n; i++) {
             dp[i][0] = 1;
         }
@@ -54,33 +60,33 @@ public:
     int numDistinct2(string str, string target) {
         int n = str.length();
         int m = target.length();
-        vector<unsigned long long> dp(m + 1, 0);
-        dp[0] = 1;
+        memset(dp1D, 0, sizeof(dp1D));
+        dp1D[0] = 1;
         for (int i = 1; i <= n; i++) {
             for (int j = m; j >= 1; j--) {
                 if (str[i - 1] == target[j - 1]) {
-                    dp[j] += dp[j - 1];
+                    dp1D[j] += dp1D[j - 1];
                 }
             }
         }
-        return (int)dp[m];
+        return (int)dp1D[m];
     }
 
-    // 取模版本（LeetCode 提交用）
-    int numDistinct(string s, string t) {
-        const int MOD = 1000000007;
-        int n = s.length();
-        int m = t.length();
-        vector<int> dp(m + 1, 0);
-        dp[0] = 1;
+    // 本题说了要取模，所以增加取模的逻辑
+    int numDistinct(string str, string target) {
+        int mod = 1000000007;
+        int n = str.length();
+        int m = target.length();
+        memset(dpMod, 0, sizeof(dpMod));
+        dpMod[0] = 1;
         for (int i = 1; i <= n; i++) {
             for (int j = m; j >= 1; j--) {
-                if (s[i - 1] == t[j - 1]) {
-                    dp[j] = (dp[j] + dp[j - 1]) % MOD;
+                if (str[i - 1] == target[j - 1]) {
+                    dpMod[j] = (dpMod[j] + dpMod[j - 1]) % mod;
                 }
             }
         }
-        return dp[m];
+        return dpMod[m];
     }
 };
 ```
@@ -93,16 +99,18 @@ public:
 给定两个单词 word1 和 word2，每次可以**插入**（代价 a）、**删除**（代价 b）、**替换**（代价 c）一个字符。求将 word1 转化成 word2 的最小代价。
 
 - LeetCode 72（特例：a=b=c=1）: https://leetcode.cn/problems/edit-distance/
+- word1、word2 长度 ≤ 500
 
 ### 核心思路
 **二维 DP，从末尾字符分类讨论**：
 
 - `dp[i][j]`：s1 前缀长度为 i 变成 s2 前缀长度为 j 的最小代价
-- 若 `s1[i-1] == s2[j-1]`：直接保留 → `dp[i][j] = dp[i-1][j-1]`
-- 否则三种操作取 min：
-  - 替换：`dp[i-1][j-1] + c`
-  - 插入：`dp[i][j-1] + a`（s1 的 i 个搞定 s2 的 j-1 个，最后插入 s2[j-1]）
-  - 删除：`dp[i-1][j] + b`（s1 删掉最后一个，用前 i-1 去搞定 s2）
+- 原初尝试版把「s1 最后一个字符是否参与变换」分成四大可能性：
+  - p1（相等才成立）：`dp[i-1][j-1]`
+  - p2（不等才成立）：`dp[i-1][j-1] + c`（替换）
+  - p3：`dp[i][j-1] + a`（插入 s2 最后一个字符）
+  - p4：`dp[i-1][j] + b`（删除 s1 最后一个字符）
+- 小优化：若 `s1[i-1] == s2[j-1]`，直接保留 `dp[i][j] = dp[i-1][j-1]`；否则三种操作取 min
 - 初始：`dp[i][0] = i*b`，`dp[0][j] = j*a`
 - 依赖**左**、**上**、**左上**三个格子
 
@@ -113,8 +121,12 @@ public:
 
 ### 代码
 ```cpp
-#include <bits/stdc++.h>
-using namespace std;
+// word1、word2 的长度 <= 500
+const int MAXN = 501;
+const int MAXM = 501;
+
+int dp[MAXN][MAXM];
+int dp1D[MAXM];
 
 class Solution {
 public:
@@ -127,10 +139,11 @@ public:
     // a : str1中插入1个字符的代价
     // b : str1中删除1个字符的代价
     // c : str1中改变1个字符的代价
+    // 返回从str1转化成str2的最低代价
     int editDistance1(string str1, string str2, int a, int b, int c) {
         int n = str1.length();
         int m = str2.length();
-        vector<vector<int>> dp(n + 1, vector<int>(m + 1));
+        memset(dp, 0, sizeof(dp));
         for (int i = 1; i <= n; i++) {
             dp[i][0] = i * b;
         }
@@ -139,11 +152,17 @@ public:
         }
         for (int i = 1; i <= n; i++) {
             for (int j = 1; j <= m; j++) {
+                int p1 = INT_MAX;
                 if (str1[i - 1] == str2[j - 1]) {
-                    dp[i][j] = dp[i - 1][j - 1];
-                } else {
-                    dp[i][j] = min({dp[i - 1][j - 1] + c, dp[i][j - 1] + a, dp[i - 1][j] + b});
+                    p1 = dp[i - 1][j - 1];
                 }
+                int p2 = INT_MAX;
+                if (str1[i - 1] != str2[j - 1]) {
+                    p2 = dp[i - 1][j - 1] + c;
+                }
+                int p3 = dp[i][j - 1] + a;
+                int p4 = dp[i - 1][j] + b;
+                dp[i][j] = min(min(p1, p2), min(p3, p4));
             }
         }
         return dp[n][m];
@@ -153,7 +172,7 @@ public:
     int editDistance2(string str1, string str2, int a, int b, int c) {
         int n = str1.length();
         int m = str2.length();
-        vector<vector<int>> dp(n + 1, vector<int>(m + 1));
+        memset(dp, 0, sizeof(dp));
         for (int i = 1; i <= n; i++) {
             dp[i][0] = i * b;
         }
@@ -165,7 +184,7 @@ public:
                 if (str1[i - 1] == str2[j - 1]) {
                     dp[i][j] = dp[i - 1][j - 1];
                 } else {
-                    dp[i][j] = min({dp[i - 1][j] + b, dp[i][j - 1] + a, dp[i - 1][j - 1] + c});
+                    dp[i][j] = min(min(dp[i - 1][j] + b, dp[i][j - 1] + a), dp[i - 1][j - 1] + c);
                 }
             }
         }
@@ -176,24 +195,24 @@ public:
     int editDistance3(string str1, string str2, int a, int b, int c) {
         int n = str1.length();
         int m = str2.length();
-        vector<int> dp(m + 1);
+        memset(dp1D, 0, sizeof(dp1D));
         for (int j = 1; j <= m; j++) {
-            dp[j] = j * a;
+            dp1D[j] = j * a;
         }
         for (int i = 1, leftUp, backUp; i <= n; i++) {
             leftUp = (i - 1) * b;
-            dp[0] = i * b;
+            dp1D[0] = i * b;
             for (int j = 1; j <= m; j++) {
-                backUp = dp[j];
+                backUp = dp1D[j];
                 if (str1[i - 1] == str2[j - 1]) {
-                    dp[j] = leftUp;
+                    dp1D[j] = leftUp;
                 } else {
-                    dp[j] = min({dp[j] + b, dp[j - 1] + a, leftUp + c});
+                    dp1D[j] = min(min(dp1D[j] + b, dp1D[j - 1] + a), leftUp + c);
                 }
                 leftUp = backUp;
             }
         }
-        return dp[m];
+        return dp1D[m];
     }
 };
 ```
@@ -206,6 +225,7 @@ public:
 给定 s1、s2、s3，判断 s3 是否由 s1 和 s2 **交错组成**（保持各自相对次序，可随意穿插）。类似洗扑克牌。
 
 - LeetCode 97: https://leetcode.cn/problems/interleaving-string/
+- s1、s2 长度 ≤ 100，s3 长度 ≤ 200
 
 ### 核心思路
 **二维 DP，讨论 s3 最后一个字符来自谁**：
@@ -224,19 +244,23 @@ public:
 
 ### 代码
 ```cpp
-#include <bits/stdc++.h>
-using namespace std;
+// s1、s2 的长度 <= 100，s3 的长度 <= 200
+const int MAXN = 101;
+const int MAXM = 101;
+
+bool dp[MAXN][MAXM];
+bool dp1D[MAXM];
 
 class Solution {
 public:
     // 普通动态规划
     bool isInterleave1(string str1, string str2, string str3) {
-        int n = str1.length();
-        int m = str2.length();
-        if (n + m != (int)str3.length()) {
+        if (str1.length() + str2.length() != str3.length()) {
             return false;
         }
-        vector<vector<bool>> dp(n + 1, vector<bool>(m + 1, false));
+        int n = str1.length();
+        int m = str2.length();
+        memset(dp, false, sizeof(dp));
         dp[0][0] = true;
         for (int i = 1; i <= n; i++) {
             if (str1[i - 1] != str3[i - 1]) {
@@ -259,29 +283,29 @@ public:
         return dp[n][m];
     }
 
-    // 空间压缩（LeetCode 提交用）
-    bool isInterleave(string s1, string s2, string s3) {
-        int n = s1.length();
-        int m = s2.length();
-        if (n + m != (int)s3.length()) {
+    // 空间压缩
+    bool isInterleave(string str1, string str2, string str3) {
+        if (str1.length() + str2.length() != str3.length()) {
             return false;
         }
-        vector<bool> dp(m + 1, false);
-        dp[0] = true;
+        int n = str1.length();
+        int m = str2.length();
+        memset(dp1D, false, sizeof(dp1D));
+        dp1D[0] = true;
         for (int j = 1; j <= m; j++) {
-            if (s2[j - 1] != s3[j - 1]) {
+            if (str2[j - 1] != str3[j - 1]) {
                 break;
             }
-            dp[j] = true;
+            dp1D[j] = true;
         }
         for (int i = 1; i <= n; i++) {
-            dp[0] = s1[i - 1] == s3[i - 1] && dp[0];
+            dp1D[0] = str1[i - 1] == str3[i - 1] && dp1D[0];
             for (int j = 1; j <= m; j++) {
-                dp[j] = (s1[i - 1] == s3[i + j - 1] && dp[j])
-                     || (s2[j - 1] == s3[i + j - 1] && dp[j - 1]);
+                dp1D[j] = (str1[i - 1] == str3[i + j - 1] && dp1D[j])
+                       || (str2[j - 1] == str3[i + j - 1] && dp1D[j - 1]);
             }
         }
-        return dp[m];
+        return dp1D[m];
     }
 };
 ```
@@ -310,9 +334,6 @@ n 个格子，m 种颜色。每个格子涂一种颜色。当涂满 n 个格子�
 
 ### 代码
 ```cpp
-#include <bits/stdc++.h>
-using namespace std;
-
 const int MOD = 1000000007;
 const int MAXN = 5001;
 
@@ -360,16 +381,18 @@ int ways2(int n, int m) {
 
 ### 代码
 ```cpp
-#include <bits/stdc++.h>
-using namespace std;
+const int MAXN = 1001;
+const int MAXM = 1001;
+
+int dp[MAXN][MAXM];
 
 // 正式方法，动态规划
 int minDelete2(string str1, string str2) {
     int n = str1.length();
     int m = str2.length();
+    memset(dp, 0, sizeof(dp));
     // dp[len1][len2] :
     // s1[前缀长度为i]至少删除多少字符，可以变成s2[前缀长度为j]的任意后缀串
-    vector<vector<int>> dp(n + 1, vector<int>(m + 1));
     for (int i = 1; i <= n; i++) {
         dp[i][0] = i;
         for (int j = 1; j <= m; j++) {

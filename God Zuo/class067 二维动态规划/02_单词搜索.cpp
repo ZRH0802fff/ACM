@@ -6,42 +6,52 @@
 // 同一个单元格内的字母不允许被重复使用
 // 测试链接 : https://leetcode.cn/problems/word-search/
 
-#include <vector>
-#include <string>
+#include <bits/stdc++.h>
 using namespace std;
 
-class WordSearch {
+class Solution {
 public:
-    static bool exist(vector<vector<char>>& board, string word) {
-        for (int i = 0; i < board.size(); i++) {
-            for (int j = 0; j < board[0].size(); j++) {
-                if (dfs(board, i, j, word, 0)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
 
-    // 因为board会改其中的字符
-    // 用来标记哪些字符无法再用
-    // 带路径的递归无法改成动态规划或者说没必要
-    // 从(i,j)出发，来到w[k]，请问后续能不能把word走出来w[k...]
-    static bool dfs(vector<vector<char>>& b, int i, int j, const string& w, int k) {
-        if (k == w.length()) {
-            return true;
-        }
-        if (i < 0 || i == (int)b.size() || j < 0 || j == (int)b[0].size() || b[i][j] != w[k]) {
-            return false;
-        }
-        // 不越界，b[i][j] == w[k]
-        char tmp = b[i][j];
-        b[i][j] = 0;
-        bool ans = dfs(b, i - 1, j, w, k + 1)
-                || dfs(b, i + 1, j, w, k + 1)
-                || dfs(b, i, j - 1, w, k + 1)
-                || dfs(b, i, j + 1, w, k + 1);
-        b[i][j] = tmp;
-        return ans;
-    }
+	bool exist(vector<vector<char>>& board, string word) {
+		for (int i = 0; i < board.size(); i++) {
+			for (int j = 0; j < board[0].size(); j++) {
+				if (f(board, i, j, word, 0)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	// 因为board会改其中的字符
+	// 用来标记哪些字符无法再用
+	// 带路径的递归无法改成动态规划或者说没必要
+	// 从(i,j)出发，来到w[k]，请问后续能不能把word走出来w[k...]
+	bool f(vector<vector<char>>& b, int i, int j, string& w, int k) {
+		if (k == w.length()) {
+			return true;
+		}
+		if (i < 0 || i == (int)b.size() || j < 0 || j == (int)b[0].size() || b[i][j] != w[k]) {
+			return false;
+		}
+		// 不越界，b[i][j] == w[k]
+		char tmp = b[i][j];
+		b[i][j] = 0;
+		bool ans = f(b, i - 1, j, w, k + 1)
+				|| f(b, i + 1, j, w, k + 1)
+				|| f(b, i, j - 1, w, k + 1)
+				|| f(b, i, j + 1, w, k + 1);
+		b[i][j] = tmp;
+		return ans;
+	}
+
 };
+
+int main() {
+	Solution sol;
+	vector<vector<char>> board = { {'A','B','C','E'}, {'S','F','C','S'}, {'A','D','E','E'} };
+	cout << sol.exist(board, "ABCCED") << endl; // 1 (true)
+	cout << sol.exist(board, "SEE") << endl;    // 1 (true)
+	cout << sol.exist(board, "ABCB") << endl;   // 0 (false)
+	return 0;
+}
