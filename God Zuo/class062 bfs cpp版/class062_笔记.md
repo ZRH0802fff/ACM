@@ -202,7 +202,10 @@ class Solution {
 public:
     int minimumObstacles(vector<vector<int>>& grid) {
         int m = grid.size(), n = grid[0].size();
-        vector<vector<int>> distance(m, vector<int>(n, INT_MAX));
+        // distance 是 new int[m][n]：m、n 单维最大 1e5 但 m*n <= 1e5，得到具体 m、n 再开二维数组
+        int distance[m][n];
+        for (int i = 0; i < m; i++)
+            for (int j = 0; j < n; j++) distance[i][j] = INT_MAX;
         h = t = MAXN / 2;
         deque_[h][0] = 0; deque_[h][1] = 0;
         distance[0][0] = 0;
@@ -259,7 +262,10 @@ class Solution {
 public:
     int minCost(vector<vector<int>>& grid) {
         int m = grid.size(), n = grid[0].size();
-        vector<vector<int>> distance(m, vector<int>(n, INT_MAX));
+        // distance 是 new int[m][n]，得到具体 m、n 再开二维数组
+        int distance[m][n];
+        for (int i = 0; i < m; i++)
+            for (int j = 0; j < n; j++) distance[i][j] = INT_MAX;
         h = t = MAXN / 2;
         deque_[h][0] = 0; deque_[h][1] = 0;
         distance[0][0] = 0;

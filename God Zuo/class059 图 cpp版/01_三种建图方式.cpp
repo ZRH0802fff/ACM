@@ -13,6 +13,12 @@ const int MAXN = 11;
 // 因为一条无向边要加两条有向边
 const int MAXM = 21;
 
+// 边的数据结构：每条边 = (u, v, w)，表示 u -> v、边权 w
+// edges 数组一律用 struct，不用 int edges[m][3]
+struct Edge {
+    int u, v, w;
+};
+
 // 邻接矩阵方式建图
 int graph1[MAXN][MAXN];
 
@@ -58,37 +64,37 @@ void addEdge(int u, int v, int w) {
 }
 
 // 三种方式建立有向图带权图
-void directGraph(int n, int edges[][3], int m) {
+void directGraph(int n, Edge edges[], int m) {
     // 邻接矩阵建图
     for (int i = 0; i < m; i++) {
-        graph1[edges[i][0]][edges[i][1]] = edges[i][2];
+        graph1[edges[i].u][edges[i].v] = edges[i].w;
     }
     // 邻接表建图
     for (int i = 0; i < m; i++) {
-        graph2[edges[i][0]].push_back({edges[i][1], edges[i][2]});
+        graph2[edges[i].u].push_back({edges[i].v, edges[i].w});
     }
     // 链式前向星建图
     for (int i = 0; i < m; i++) {
-        addEdge(edges[i][0], edges[i][1], edges[i][2]);
+        addEdge(edges[i].u, edges[i].v, edges[i].w);
     }
 }
 
 // 三种方式建立无向图带权图
-void undirectGraph(int n, int edges[][3], int m) {
+void undirectGraph(int n, Edge edges[], int m) {
     // 邻接矩阵建图
     for (int i = 0; i < m; i++) {
-        graph1[edges[i][0]][edges[i][1]] = edges[i][2];
-        graph1[edges[i][1]][edges[i][0]] = edges[i][2];
+        graph1[edges[i].u][edges[i].v] = edges[i].w;
+        graph1[edges[i].v][edges[i].u] = edges[i].w;
     }
     // 邻接表建图
     for (int i = 0; i < m; i++) {
-        graph2[edges[i][0]].push_back({edges[i][1], edges[i][2]});
-        graph2[edges[i][1]].push_back({edges[i][0], edges[i][2]});
+        graph2[edges[i].u].push_back({edges[i].v, edges[i].w});
+        graph2[edges[i].v].push_back({edges[i].u, edges[i].w});
     }
     // 链式前向星建图
     for (int i = 0; i < m; i++) {
-        addEdge(edges[i][0], edges[i][1], edges[i][2]);
-        addEdge(edges[i][1], edges[i][0], edges[i][2]);
+        addEdge(edges[i].u, edges[i].v, edges[i].w);
+        addEdge(edges[i].v, edges[i].u, edges[i].w);
     }
 }
 
@@ -124,14 +130,14 @@ int main() {
     // 点的编号为1...n
     // 例子1自己画一下图，有向带权图，然后打印结果
     int n1 = 4;
-    int edges1[][3] = { { 1, 3, 6 }, { 4, 3, 4 }, { 2, 4, 2 }, { 1, 2, 7 }, { 2, 3, 5 }, { 3, 1, 1 } };
+    Edge edges1[] = { { 1, 3, 6 }, { 4, 3, 4 }, { 2, 4, 2 }, { 1, 2, 7 }, { 2, 3, 5 }, { 3, 1, 1 } };
     build(n1);
     directGraph(n1, edges1, 6);
     traversal(n1);
     cout << "==============================" << endl;
     // 例子2自己画一下图，无向带权图，然后打印结果
     int n2 = 5;
-    int edges2[][3] = { { 3, 5, 4 }, { 4, 1, 1 }, { 3, 4, 2 }, { 5, 2, 4 }, { 2, 3, 7 }, { 1, 5, 5 }, { 4, 2, 6 } };
+    Edge edges2[] = { { 3, 5, 4 }, { 4, 1, 1 }, { 3, 4, 2 }, { 5, 2, 4 }, { 2, 3, 7 }, { 1, 5, 5 }, { 4, 2, 6 } };
     build(n2);
     undirectGraph(n2, edges2, 7);
     traversal(n2);

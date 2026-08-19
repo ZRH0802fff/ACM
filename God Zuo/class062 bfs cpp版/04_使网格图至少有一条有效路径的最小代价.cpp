@@ -19,7 +19,7 @@ using namespace std;
 
 const int MAXN = 10001;
 
-// 01bfs，双端队列
+// 01bfs，双端队列（第一维是 m*n <= 1e4，全局够用）
 int deque_[MAXN][2];
 int h, t;
 
@@ -36,7 +36,13 @@ public:
     int minCost(vector<vector<int>>& grid) {
         int m = grid.size();
         int n = grid[0].size();
-        vector<vector<int>> distance(m, vector<int>(n, INT_MAX));
+        // distance 对应 Java 的 new int[m][n]，得到具体 m、n 后再开二维数组（VLA）
+        int distance[m][n];
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                distance[i][j] = INT_MAX;
+            }
+        }
         h = t = MAXN / 2;
         deque_[h][0] = 0;
         deque_[h][1] = 0;

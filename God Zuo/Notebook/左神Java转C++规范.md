@@ -47,7 +47,7 @@
    | `static int[] father` | 全局 `int father[MAXN]` | 并查集 |
    | `static int[] head/next/to` | 全局 `int head[MAXN]` 等 | 链式前向星 |
    | `ArrayList<ArrayList<>>` | `vector<vector<int>>` | 动态数组（唯一用 vector 的地方） |
-   | 局部 `int[] edges`（需排序） | 全局 `Edge edges[MAXM]` | C 数组无法 sort |
+   | 局部 `int[] edges`（边的数组） | 全局 `Edge edges[MAXM]`（struct） | edges 一律用 struct，别用 `int edges[m][3]` |
 
    **额外硬性规定（不受上述规则影响）**：
    - **拓扑排序的入度表和队列始终用全局静态数组**，即使 Java 是局部的：
@@ -55,6 +55,19 @@
      int indegree[MAXN];
      int queue_[MAXN];
      int l, r;
+     ```
+   - **邻接表（`vector<vector<int>>`）和堆（`priority_queue`）这类动态结构也开全局**，别像 Java 一样在函数里局部 `new`：
+     ```cpp
+     vector<vector<int>> graph;                            // 邻接表，全局
+     priority_queue<int, vector<int>, greater<int>> heap;  // 小根堆，全局
+     ```
+     build 里清空：`graph.clear(); graph.resize(n + 1);`、`heap = priority_queue<int, vector<int>, greater<int>>();`。
+   - **二维数组 `new int[m][n]`，当 `m、n` 单维上限大（如 1e5）但 `m*n` 有上界（如 1e5）时**：全局 `int dp[MAXN][MAXN]` 会爆内存，得到具体 `m、n` 后再开二维数组（VLA）：
+     ```cpp
+     int distance[m][n];            // 得到具体 m、n 再开二维数组（不开全局最大）
+     for (int i = 0; i < m; i++)
+         for (int j = 0; j < n; j++)
+             distance[i][j] = INT_MAX;
      ```
    - LeetCode 函数签名中的 `vector<int>&` 传参保留，返回值可用 `vector<int>` 以匹配接口。
 
@@ -222,6 +235,8 @@ sort(arr, arr + n, [](const Item& x, const Item& y) {
 });
 ```
 
+**边的数据（edges）一律用 struct**：遇到 `int edges[m][3]`（每条边 u、v、w 三列）这类 C 风格二维数组，必须定义 `struct Edge { int u, v, w; }`，用 `edges[i].u / .v / .w` 访问，不要用 `edges[i][0] / [1] / [2]`。函数传参写 `Edge edges[]`，main 里直接 `Edge edges[] = { {u, v, w}, ... }`。
+
 ### 3.3 栈和队列 — 不用 STL，用数组模拟
 
 ```cpp
@@ -278,6 +293,27 @@ dp[j] = (dp[j] + dp[j - 1]) % MOD;
 // ⚠️ 注意：中间结果可能超 int，必要时用 long long
 long long temp = (long long)a * b % MOD;
 ```
+
+---
+
+### 3.6 堆 — 用 STL priority_queue（不手写）
+
+需要堆时**先用 STL 的 `priority_queue`**，不要手写堆：
+
+```cpp
+// 小根堆（默认大根堆，想小根堆加 greater<int>）
+priority_queue<int, vector<int>, greater<int>> heap;  // 小根堆，top() 是最小值
+priority_queue<int> bigHeap;                          // 大根堆，top() 是最大值
+
+heap.push(x);        // 入堆
+int t = heap.top();  // 取堆顶（不弹出）
+heap.pop();          // 弹堆顶
+heap.empty();        // 判空
+```
+
+> 堆要**开全局**（和邻接表一样，别在函数里局部 new），build 里用 `heap = priority_queue<int, vector<int>, greater<int>>();` 清空。
+>
+> 例外：栈和队列仍按 3.3 用数组模拟，只有「堆」用 STL。
 
 ---
 
@@ -401,6 +437,7 @@ memset(dp, 0, sizeof(dp));
 | class031 | 位运算 | 6 | |
 | class032 | 位图 | 2 | |
 | class033 | 位运算实现加减乘除 | 1 | |
+| class064 | Dijkstra算法、分层图最短路 | 6 | |
 | class066 | 一维动态规划入门 | 8 | |
 | class067 | 二维动态规划 | 6 | |
 | class068 | 更多二维动态规划题目 | 5 | |

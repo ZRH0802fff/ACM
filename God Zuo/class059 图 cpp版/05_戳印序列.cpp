@@ -47,8 +47,6 @@ void addEdge(int f, int t) {
 class Solution {
 public:
     vector<int> movesToStamp(string stamp, string target) {
-        char* s = &stamp[0];
-        char* t = &target[0];
         int m = stamp.length();
         int n = target.length();
         // indegree[i]表示以i位置开头盖印章，有多少个字符已经和最终目标一致
@@ -62,7 +60,7 @@ public:
             // i开头....(m个)
             // i+0 i+1 i+m-1
             for (int j = 0; j < m; j++) {
-                if (t[i + j] == s[j]) {
+                if (target[i + j] == stamp[j]) {
                     if (--indegree[i] == 0) {
                         queue_[r++] = i;
                     }
