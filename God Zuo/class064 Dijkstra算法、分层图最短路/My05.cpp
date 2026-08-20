@@ -30,6 +30,7 @@ int n;
 class Solution {
 public:
     int electricCarPlan(vector<vector<int>>& paths, int cnt, int start, int end, vector<int>& charge) {
+        n=charge.size();
         graph.clear();
         graph.resize(n);
         for (auto& path : paths) {

@@ -438,6 +438,7 @@ memset(dp, 0, sizeof(dp));
 | class032 | 位图 | 2 | |
 | class033 | 位运算实现加减乘除 | 1 | |
 | class064 | Dijkstra算法、分层图最短路 | 6 | |
+| class065 | A星、Floyd、Bellman-Ford与SPFA | 4 | |
 | class066 | 一维动态规划入门 | 8 | |
 | class067 | 二维动态规划 | 6 | |
 | class068 | 更多二维动态规划题目 | 5 | |
