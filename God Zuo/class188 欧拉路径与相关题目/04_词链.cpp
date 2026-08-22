@@ -1,0 +1,141 @@
+// 词链
+// 给定n个由小写字母组成的单词，想把所有单词串成一个词链
+// 同时要求前一个单词的结尾字符 == 后一个单词的开头字符
+// 比如词链，aloha.arachnid.dog.gopher.rat.tiger
+// 需要使用每个输入的单词恰好一次，同一单词出现k次就要用k次
+// 返回字典序最小的结果，注意 . 的字典序 < 小写字母的字典序
+// 如果不存在合法词链，输出***
+// 1 <= n <= 1000
+// 测试链接 : https://www.luogu.com.cn/problem/P1127
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+const int MAXN = 27;
+const int MAXM = 1002;
+int n = 26, m;
+
+string str[MAXM];
+int a[MAXM];
+int b[MAXM];
+int eidArr[MAXM];
+
+int head[MAXN];
+int nxt[MAXM];
+int to[MAXM];
+string weight[MAXM];
+int cntg;
+
+int cur[MAXN];
+int outDeg[MAXN];
+int inDeg[MAXN];
+
+string path[MAXM];
+int cntp;
+
+bool EdgeCmp(int i, int j) {
+    if (a[i] != a[j]) {
+        return a[i] < a[j];
+    }
+    return str[i] < str[j];
+}
+
+void addEdge(int u, int v, string w) {
+    nxt[++cntg] = head[u];
+    to[cntg] = v;
+    weight[cntg] = w;
+    head[u] = cntg;
+}
+
+int startNode(const string &str) {
+    return (int)(str[0] - 'a' + 1);
+}
+
+int endNode(const string &str) {
+    return (int)(str[(int)str.size() - 1] - 'a' + 1);
+}
+
+void connect() {
+    sort(eidArr + 1, eidArr + m + 1, EdgeCmp);
+    for (int l = 1, r = 1; l <= m; l = ++r) {
+        while (r + 1 <= m && a[eidArr[l]] == a[eidArr[r + 1]]) {
+            r++;
+        }
+        for (int i = r, u, v; i >= l; i--) {
+            u = a[eidArr[i]];
+            v = b[eidArr[i]];
+            outDeg[u]++;
+            inDeg[v]++;
+            addEdge(u, v, str[eidArr[i]]);
+        }
+    }
+    for (int i = 1; i <= n; i++) {
+        cur[i] = head[i];
+    }
+}
+
+int directedStart() {
+    int start = -1, end = -1;
+    for (int i = 1; i <= n; i++) {
+        int v = outDeg[i] - inDeg[i];
+        if (v < -1 || v > 1 || (v == 1 && start != -1) || (v == -1 && end != -1)) {
+            return -1;
+        }
+        if (v == 1) {
+            start = i;
+        }
+        if (v == -1) {
+            end = i;
+        }
+    }
+    if ((start == -1) ^ (end == -1)) {
+        return -1;
+    }
+    if (start != -1) {
+        return start;
+    }
+    for (int i = 1; i <= n; i++) {
+        if (outDeg[i] > 0) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+void euler(int u, string w) {
+    for (int e = cur[u]; e > 0; e = cur[u]) {
+        cur[u] = nxt[e];
+        euler(to[e], weight[e]);
+    }
+    path[++cntp] = w;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cin >> m;
+    for (int i = 1; i <= m; i++) {
+        cin >> str[i];
+        a[i] = startNode(str[i]);
+        b[i] = endNode(str[i]);
+        eidArr[i] = i;
+    }
+    connect();
+    int start = directedStart();
+    if (start == -1) {
+        cout << "***\n";
+    } else {
+        euler(start, "");
+        if (cntp != m + 1) {
+            cout << "***\n";
+        } else {
+            cout << path[cntp - 1];
+            for (int i = cntp - 2; i >= 1; i--) {
+                cout << "." << path[i];
+            }
+            cout << "\n";
+        }
+    }
+    return 0;
+}
