@@ -66,7 +66,7 @@ int directedStart() {
     int start = -1, end = -1;
     for (int i = 1; i <= n; i++) {
         int v = outDeg[i] - inDeg[i];
-        if (v < -1 || v > 1 || (v == 1 && start != -1) || (v == -1 && end != -1)) {
+        if (v < -1 || v > 1 || (v == 1 && start != -1) || (v == -1 && end != -1)) {//起点不止一个或终点不止一个直接排除
             return -1;
         }
         if (v == 1) {
