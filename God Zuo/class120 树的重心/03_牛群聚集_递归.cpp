@@ -12,7 +12,7 @@
 // java能通过的写法参考本节课Code03_GreatCowGathering2文件
 
 #include <bits/stdc++.h>
-using namespace std;
+using namespace std; 
 
 const int MAXN = 100001;
 
