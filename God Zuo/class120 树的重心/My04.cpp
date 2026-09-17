@@ -76,7 +76,7 @@ int main(){
     while(t--){
         cin>>n;
         build();
-        for(int i=0,u,v;i<n; ++i){
+        for(int i=1,u,v;i<n; ++i){
             cin>>u>>v;
             addEdge(u,v);
             addEdge(v,u);

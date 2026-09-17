@@ -15,27 +15,18 @@ const int MAXN = 200001;
 int n;
 
 int head[MAXN];
-
 int nxt[MAXN << 1];
-
 int to[MAXN << 1];
-
 int weight[MAXN << 1];
-
 int cnt;
 
 int start;
-
 int fin;
-
 long long dist[MAXN];
-
 int last[MAXN];
-
 long long diameter;
 
 bool diameterPath[MAXN];
-
 int commonEdges;
 
 void build() {
