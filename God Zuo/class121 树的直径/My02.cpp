@@ -1,11 +1,116 @@
-// 造公园
-// 一共n个节点，编号1~n，有m条边连接，边权都是1
-// 所有节点可能形成多个连通区，每个连通区保证是树结构
-// 有两种类型的操作
-// 操作 1 x   : 返回x到离它最远的点的距离
-// 操作 2 x y : 如果x和y已经连通，那么忽略
-//              如果不连通，那么执行连通操作，把x和y各自的区域连通起来
-//              并且要保证连通成的大区域的直径长度最小
-// 测试链接 : https://www.luogu.com.cn/problem/P2195
+// 所有直径的公共部分(递归版)
+// 给定一棵树，边权都为正
+// 打印直径长度、所有直径的公共部分有几条边
+// 测试链接 : https://www.luogu.com.cn/problem/P3304
 
 #include<bits/stdc++.h>
+using namespace std;
+
+const int maxn=200010;
+
+int n;
+int head[maxn];
+int nxt[maxn];
+int to[maxn];
+int weight[maxn];
+int cnt;
+
+int sta,ed;
+long long dist[maxn];
+int last[maxn];
+
+long long length;
+bool longPath[maxn];
+int comEdge;
+
+void build(){
+    cnt=1;
+    memset(head,0,sizeof(head));
+    memset(longPath,0,sizeof(longPath));
+}
+
+void addEdge(int u,int v,int w){
+    nxt[cnt]=head[u];
+    to[cnt]=v;
+    weight[cnt]=w;
+    head[u]=cnt++;
+}
+
+void dfs(int u,int f,long long c){
+    last[u]=f;
+    dist[u]=c;
+    for(int e=head[u];e!=0;e=nxt[e]){
+        if(to[e]!=f){
+            dfs(to[e],u,c+weight[e]);
+        }
+    }
+}
+
+void road(){
+    dfs(1,0,0);
+    sta=1;
+    for(int i=2;i<=n;++i){
+        if(dist[i]>dist[sta]){
+            sta=i;
+        }
+    }
+    dfs(sta,0,0);
+    ed=1;
+    for(int i=2;i<=n;++i){
+        if(dist[i]>dist[ed]){
+            ed=i;
+        }
+    }
+    length=dist[ed];
+}
+
+long long maxdistEx(int u,int f,long long c){
+    long long ans=c;
+    for(int e=head[u],v;e!=0;e=nxt[e]){
+        v=to[e];
+        if(!longPath[v] && v!=f){
+            ans=max(ans,maxdistEx(v,u,c+weight[e]));
+        }
+    }
+    return ans;
+}
+
+void slove(){
+    road();
+    for(int i=ed; i!=0; i=last[i]){
+        longPath[i]=true;
+    }
+    int l=sta;
+    int r=ed;
+    long long maxDist;
+    for(int i=last[ed];i!=sta;i=last[i]){
+        maxDist=maxdistEx(i,0,0);
+        if(maxDist==length-dist[i]){
+            r=i;
+        }
+        if(maxDist==dist[i] && l==sta){
+            l=i;
+        }
+    }
+    if(l==r){
+        comEdge=0;
+    }else{
+        comEdge=1;
+        for(int i=last[r];i!=l;i=last[i]){
+            comEdge++;
+        }
+    }
+}
+
+int main(){
+    cin >> n;
+	build();
+	for (int i = 1, u, v, w; i < n; i++) {
+		cin >> u >> v >> w;
+		addEdge(u, v, w);
+		addEdge(v, u, w);
+	}
+	slove();
+    cout<<length<<'\n'<<comEdge<<'\n';
+    return 0;
+}
